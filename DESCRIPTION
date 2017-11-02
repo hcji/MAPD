@@ -1,0 +1,12 @@
+Package: WMPD
+Type: Package
+Title: Wavelet-based Peak Detection Assisted by Mass
+Version: 0.1.0
+Author: Hongchao Ji
+Maintainer: Hongchao Ji <ji.hongchao@foxmail.com>
+Description: WMPD is a peak detection method, which combines wavelet transform and mass spectrometry information. The main purpose is to identify whether overlapped peaks exist and whether they are true positive. If the overlapped peaks are true peaks, WMPD can also resolve them and calculate their peak heights, widths and areas respectively.
+License: GPL (>= 2)
+Encoding: UTF-8
+LazyData: true
+Imports: Rcpp (>= 0.12.13), shiny, plotly, IRanges, Matrix, GA
+LinkingTo: Rcpp, RcppArmadillo
