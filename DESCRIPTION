@@ -8,5 +8,6 @@ Description: WMPD is a peak detection method, which combines wavelet transform a
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-Imports: Rcpp (>= 0.12.13), shiny, plotly, IRanges, Matrix, GA
+Imports: Rcpp (>= 0.12.13), shiny, plotly, Matrix, GA
+Remotes: bioc::3.5/IRanges
 LinkingTo: Rcpp, RcppArmadillo
