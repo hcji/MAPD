@@ -1,4 +1,4 @@
-# WMPD
+# WMPD [![Build Status](https://www.travis-ci.org/hcji/WMPD.svg?branch=master)](https://www.travis-ci.org/hcji/WMPD)
   Wavelet-based Peak Detection Assisted by Mass
   
 ## Installation  
