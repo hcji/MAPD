@@ -9,5 +9,5 @@ License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
 Imports: Rcpp (>= 0.12.13), shiny, plotly, Matrix, GA, IRanges
-Remotes: bioc::3.6/IRanges
+Remotes: bioc::3.5/IRanges
 LinkingTo: Rcpp, RcppArmadillo
