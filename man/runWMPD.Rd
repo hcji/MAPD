@@ -12,6 +12,3 @@ runWMPD()
 \value{
 A shiny app.
 }
-\examples{
-runWMPD()
-}
