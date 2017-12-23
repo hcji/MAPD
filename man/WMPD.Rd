@@ -1,0 +1,34 @@
+\name{WMPD}
+\alias{WMPD}
+
+\title{
+Peak detection combining wavelet transform and mass spectrometry
+}
+\description{
+WMPD is a peak detection method, which combines wavelet transform and mass spectrometry information. The main purpose is to identify whether overlapped peaks exist and whether they are true positive. If the overlapped peaks are true peaks, WMPD can also resolve them and calculate their peak heights, widths and areas respectively.
+}
+\usage{
+WMPD(pic, min_snr, level, pval, iter)
+}
+
+\arguments{
+  \item{pic}{
+A pure ion chromatogram with rt, intensity and mz values.
+}
+  \item{min_snr}{
+Minimum signal to noise ratio.
+}
+  \item{level}{
+Minimum intensity of a peak.
+}
+  \item{pval}{
+P-value of the t-test.
+}
+  \item{iter}{
+Number of iterations of GA.
+}
+}
+\examples{
+pic <- read.csv(system.file('example_pic.csv', package = 'WMPD'))
+peaks <- WMPD(pic, 4, 0, 0.05, 100)
+}

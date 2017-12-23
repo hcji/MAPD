@@ -1,14 +1,17 @@
 \name{runWMPD}
 \alias{runWMPD}
 \title{
-run WMPD
+Peak detection combining wavelet transform and mass spectrometry.
 }
 \description{
-This is the only function of WMPD package, which is used for launch the shiny app.
+Run WMPD in a shiny application.
 }
 \usage{
 runWMPD()
 }
 \value{
 A shiny app.
+}
+\examples{
+runWMPD()
 }
