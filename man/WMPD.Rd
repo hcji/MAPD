@@ -28,6 +28,14 @@ P-value of the t-test.
 Number of iterations of GA.
 }
 }
+
+\value{
+\item{pic}{The input pic.}
+\item{peaks}{Result of initial peak detection.}
+\item{new.peaks}{Result of peak detection after removing false positive.}
+\item{fitpic}{Fit curve of real peaks.}
+}
+
 \examples{
 pic <- read.csv(system.file('example_pic.csv', package = 'WMPD'))
 peaks <- WMPD(pic, 4, 0, 0.05, 100)
