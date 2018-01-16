@@ -6,6 +6,53 @@
 
 using namespace Rcpp;
 
+// find_closest
+int find_closest(const int seed, const int scan, const IntegerVector scans, const NumericVector mzs, const IntegerVector clu, const double tol);
+RcppExport SEXP _WMPD_find_closest(SEXP seedSEXP, SEXP scanSEXP, SEXP scansSEXP, SEXP mzsSEXP, SEXP cluSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const int >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< const int >::type scan(scanSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector >::type scans(scansSEXP);
+    Rcpp::traits::input_parameter< const NumericVector >::type mzs(mzsSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector >::type clu(cluSEXP);
+    Rcpp::traits::input_parameter< const double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(find_closest(seed, scan, scans, mzs, clu, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_trace
+List get_trace(const int seed, const IntegerVector scans, const NumericVector mzs, IntegerVector clu, double tol);
+RcppExport SEXP _WMPD_get_trace(SEXP seedSEXP, SEXP scansSEXP, SEXP mzsSEXP, SEXP cluSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const int >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< const IntegerVector >::type scans(scansSEXP);
+    Rcpp::traits::input_parameter< const NumericVector >::type mzs(mzsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type clu(cluSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_trace(seed, scans, mzs, clu, tol));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getROI
+IntegerVector getROI(int seed, IntegerVector scans, NumericVector mzs, NumericVector ints, double mztol, int max_width);
+RcppExport SEXP _WMPD_getROI(SEXP seedSEXP, SEXP scansSEXP, SEXP mzsSEXP, SEXP intsSEXP, SEXP mztolSEXP, SEXP max_widthSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type scans(scansSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type mzs(mzsSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type ints(intsSEXP);
+    Rcpp::traits::input_parameter< double >::type mztol(mztolSEXP);
+    Rcpp::traits::input_parameter< int >::type max_width(max_widthSEXP);
+    rcpp_result_gen = Rcpp::wrap(getROI(seed, scans, mzs, ints, mztol, max_width));
+    return rcpp_result_gen;
+END_RCPP
+}
 // waveft
 NumericMatrix waveft(NumericVector omega, NumericVector scales);
 RcppExport SEXP _WMPD_waveft(SEXP omegaSEXP, SEXP scalesSEXP) {
@@ -91,6 +138,9 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_WMPD_find_closest", (DL_FUNC) &_WMPD_find_closest, 6},
+    {"_WMPD_get_trace", (DL_FUNC) &_WMPD_get_trace, 5},
+    {"_WMPD_getROI", (DL_FUNC) &_WMPD_getROI, 6},
     {"_WMPD_waveft", (DL_FUNC) &_WMPD_waveft, 2},
     {"_WMPD_cwtft", (DL_FUNC) &_WMPD_cwtft, 1},
     {"_WMPD_localMax", (DL_FUNC) &_WMPD_localMax, 1},

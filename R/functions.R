@@ -145,7 +145,7 @@ peak.fit <- function(peak,pic,iter){
   hh <- 0.5*(pic[c(peak$peakIndex),2])
   ranges <- whichAsIRanges(pic[,2]>min(hh))
 
-  if (length(peak$peakIndex)>1){
+  if (length(peak$peakIndex)>0){
     mids <- round(diff(peak$peakIndex)/2) + peak$peakIndex[1:(length(peak$peakIndex)-1)]
     starts <- c(min(start(ranges)),mids)
     ends <- c(mids,max(end(ranges)))
@@ -156,8 +156,8 @@ peak.fit <- function(peak,pic,iter){
 
     lambda <- as.vector(t(cbind(positions,widths)));
 
-    lb <- peakrange(positions,widths,0.05,0.9)$lb
-    ub <- peakrange(positions,widths,0.05,0.9)$ub
+    lb <- peakrange(positions,widths,0.05,0.95)$lb
+    ub <- peakrange(positions,widths,0.05,0.95)$ub
 
     GA <- ga(type = "real-valued", fitness = fitness,
              x = 1:nrow(pic), y = pic[,2], min = c(lb), max = c(ub),
@@ -171,20 +171,7 @@ peak.fit <- function(peak,pic,iter){
     fitpics <- lapply(1:length(positions),function(s){heights[s]*Gaussian(1:nrow(pic),positions[s],widths[s])})
 
   } else {
-    starts <- min(start(ranges))
-    ends <- max(end(ranges))
-
-    widths <- (ends-starts+1)*1.7
-    heights <- max(pic[,2])
-    positions <- which.max(pic[,2])
-
-    fit <- nls(pic[,2]~heights*Gaussian(1:nrow(pic),positions,widths),start=list(heights=heights,positions=positions,widths=widths),
-               control=list(maxiter=500,tol=1e-3,minFactor=1/512,printEval=F,warnOnly=T))
-
-    fitpics <- list(predict(fit,1:nrow(pic)))
-    heights <- max(fitpics[[1]])
-    positions <- which.max(fitpics[[1]])
-    widths <- summary(fit)$parameters['widths','Estimate']
+    stop()
   }
   peak$peakIndex <- round(positions)
   peak$width <- round(widths)
@@ -202,42 +189,47 @@ WMPD <- function(pic, min_snr, level, pval, iter){
   mzs <- pic[,3]
   peaks <- peak_detection(vec, min_snr, level)
 
-  vec.smooth <- WhittakerSmooth(vec, 2)
-  helf.height <- vec.smooth[peaks$peakIndex]*0.5
-  split.point <- sapply(1:(length(peaks$peakIndex)-1), function(s){
-    peaks$peakIndex[s]+which.min(vec.smooth[peaks$peakIndex[s]:peaks$peakIndex[s+1]])
-  })
-  split.point <- unique(c(1, split.point, length(vec)))
+  if (length(peaks$peakIndex) > 1){
+    # vec <- WhittakerSmooth(vec, 2)
+    helf.height <- vec[peaks$peakIndex]*0.5
+    split.point <- sapply(1:(length(peaks$peakIndex)-1), function(s){
+      peaks$peakIndex[s]+which.min(vec[peaks$peakIndex[s]:peaks$peakIndex[s+1]])
+    })
+    split.point <- unique(c(1, split.point, length(vec)))
 
-  peak.ranges <- lapply(1:length(peaks$peakIndex),function(s){
-    split.point[s]+which(vec.smooth[split.point[s]:split.point[s+1]]>helf.height[s])-1
-  })
+    peak.ranges <- lapply(1:length(peaks$peakIndex),function(s){
+      split.point[s]+which(vec[split.point[s]:split.point[s+1]]>helf.height[s])-1
+    })
 
-  peak.mzs <- lapply(peak.ranges, function(peak.range){
-    mzs[peak.range]
-  })
+    peak.mzs <- lapply(peak.ranges, function(peak.range){
+      mzs[peak.range]
+    })
 
-  pvals <- sapply(1:(length(peak.mzs)-1),function(s){
-    t.test(peak.mzs[[s]], peak.mzs[[s+1]])$p.value
-  })
+    pvals <- sapply(1:(length(peak.mzs)-1),function(s){
+      t.test(peak.mzs[[s]], peak.mzs[[s+1]])$p.value
+    })
 
-  TP <- rep(TRUE, length(peaks$peakIndex))
-  for (i in 1:length(pvals)){
-    if (pvals[i] > pval){
-      if (peaks$signals[i] > peaks$signals[i+1]){
-        TP[i+1] <- FALSE
-      } else {
-        TP[i] <- FALSE
+    TP <- rep(TRUE, length(peaks$peakIndex))
+    for (i in 1:length(pvals)){
+      if (pvals[i] > pval && vec[split.point[i+1]] > min(helf.height[i:(i+1)])){
+        if (peaks$signals[i] > peaks$signals[i+1]){
+          TP[i+1] <- FALSE
+        } else {
+          TP[i] <- FALSE
+        }
       }
     }
-  }
-  peaks$TF <- TP
+    peaks$TF <- TP
 
-  new.peaks <- list()
-  new.peaks$peakIndex <- peaks$peakIndex[TP]
-  new.peaks$peakScale <- peaks$peakScale[TP]
-  new.peaks$snr <- peaks$snr[TP]
-  new.peaks$signals <- peaks$signals[TP]
+    new.peaks <- list()
+    new.peaks$peakIndex <- peaks$peakIndex[TP]
+    new.peaks$peakScale <- peaks$peakScale[TP]
+    new.peaks$snr <- peaks$snr[TP]
+    new.peaks$signals <- peaks$signals[TP]
+  } else {
+    peaks$TF <- TRUE
+    new.peaks <- peaks
+  }
 
   res <- peak.fit(new.peaks, pic, iter)
   positions <- rts[new.peaks$peakIndex]
@@ -263,11 +255,11 @@ runWMPD <- function(){
     titlePanel("Wavelet-based Peak Detection Assisted by Mass"),
     sidebarLayout(
       sidebarPanel(
-        fileInput("file1", "Choose CSV File",
-                  multiple = TRUE,
-                  accept = c("text/csv",
-                             "text/comma-separated-values,text/plain",
-                             ".csv")),
+        fileInput("file1", "Choose a PIC in CSV File, or a raw LC-MS dataset in a mzXML/mzML/CDF file",
+                  multiple = FALSE),
+        selectInput("type", "Select the type of file you input", choices = c("A PIC", "Raw Data")),
+        uiOutput("ctrl"),
+        h4('Peak Detection'),
         numericInput("snr",
                      "Minimum SNR of peaks:",
                      value = 4),
@@ -278,7 +270,7 @@ runWMPD <- function(){
                      "p-value of m/z difference of different peaks:",
                      value = 0.05,
                      step = 0.01),
-        actionButton("goButton", "Go!")
+        actionButton("goButton", "Peak Detection!")
 
       ),
 
@@ -292,9 +284,49 @@ runWMPD <- function(){
   )
 
   server <- function(input, output) {
+    options(shiny.maxRequestSize=1024^4)
+
+    output$ctrl <- renderUI({
+      if (input$type == "Raw Data"){
+        tagList(
+          h4('PIC Extraction'),
+          numericInput("S1_level", 'Input the minimum intensity of features', 0),
+          numericInput("S1_mztol", 'Input the m/z tolerence of features', 0.1),
+          numericInput("S1_width", 'Input the minimum width of features', 20),
+          actionButton("S1_go", "Extracting PIC!"),
+          numericInput("S1_index", "Input the PIC index you want to process", 1, step = 1)
+        )
+      }
+    })
+
+    raw_data <- reactive({
+      if (input$type == "Raw Data"){
+        req(input$file1)
+        LoadData(input$file1$datapath)
+      }
+    })
+
+    pics <- eventReactive(
+      input$S1_go,
+      withProgress(message = 'Loading Files', value = 0.5, {
+        if (input$type == "Raw Data"){
+          pics <- getPIC(raw_data(), input$S1_level, input$S1_mztol, input$S1_width)
+        }
+        pics
+      })
+    )
+
     pic <- reactive({
       req(input$file1)
-      read.csv(input$file1$datapath)
+      if(input$type == "Raw Data"){
+        this <- pics()[[input$S1_index]]
+        rt <- raw_data()$times[this$scan]
+        int <- this$int
+        mz <- this$mz
+        data.frame(rt, int, mz)
+      } else {
+        read.csv(input$file1$datapath)
+      }
     })
 
     output$Plot1 <- renderPlotly({
@@ -346,14 +378,78 @@ runWMPD <- function(){
 
       res.new <- matrix(NA, nrow(res.old), 3)
       res.new[res.old[,5]==1,] <- do.call(cbind, Peaks()$new.peaks)
-      res.new[,1] <- pic()[res.new[,1],1]
       colnames(res.new) <- c('fitted.rt', 'fitted.area', 'fitted.height')
 
-      as.data.frame(cbind(res.new, res.old))
+      index <- 1:nrow(res.old)
+
+      as.data.frame(cbind(index, res.new, res.old))
     })
   }
   shinyApp(ui = ui, server = server)
 }
 
 
+### PIC extraction
+LoadData <- function(filename)
+{
+  library(mzR)
+  splitname <- strsplit(filename,"\\.")[[1]]
+  if(tolower(splitname[length(splitname)]) == "cdf")
+  {
+    msobj <- openMSfile(filename,backend="netCDF")
+  }else{
+    msobj <- openMSfile(filename,backend="Ramp")
+  }
 
+  peakInfo <- peaks(msobj)
+  headerInfo <- header(msobj)
+  whMS1 <- which(headerInfo$msLevel==1)
+  peakInfo <- peakInfo[whMS1]
+
+  peakInfo <- lapply(peakInfo, function(spectrum) {
+    keep <- spectrum[,2] > 1e-6
+    output <- as.data.frame(spectrum[keep,,drop = FALSE])
+    colnames(output) <- c('mz','intensity')
+    return(output)
+  })
+
+  tic <- sapply(peakInfo, function(PI){sum(PI$intensity)})
+  peakNum <- unlist(lapply(peakInfo,nrow))
+  scans <- unlist(lapply(1:length(peakNum),function(s){rep(s,peakNum[s])}))
+  Mat <- do.call(rbind,peakInfo)
+
+  scanTime <- round(headerInfo$retentionTime[whMS1],3)
+  # close(msobj)
+
+  return(list(tic=tic, mzs=Mat$mz,ints=Mat$intensity,scans=scans,times=scanTime))
+}
+
+getPIC <- function(raw, level=0, mztol=0.1, width=5, kmeans=TRUE){
+  library(Ckmeans.1d.dp)
+
+  ind <- order(raw$mzs)
+  mzs <- raw$mzs[ind]
+  scans <- raw$scans[ind]
+  ints <- raw$ints[ind]
+  clu <- rep(0, length(ints))
+  ind.ints <- order(-ints)
+  scanwidth <- as.integer(width/mean(diff(raw$times)))
+
+  if (level <= 0) {level = quantile(ints, 0.95)}
+
+  pics <- list()
+  for (i in ind.ints) {
+    if (ints[i] < level) {break}
+    if (clu[i] != 0) {next}
+    this.trace <- get_trace(i-1, scans, mzs, clu, mztol)
+    clu <- this.trace$clu
+    this.trace <- this.trace$res+1
+
+    if (length(this.trace) > scanwidth) {
+      pic <- list(scan = scans[this.trace], mz = mzs[this.trace], int = ints[this.trace])
+      pics <- c(pics, list(pic))
+    }
+  }
+
+  return(pics)
+}
