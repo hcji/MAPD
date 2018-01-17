@@ -18,7 +18,7 @@ getNoise <- function(peaks, cwt2d, ridges){
   return(noises)
 }
 
-peak_detection <- function(vec, min_snr, level=0){
+peak_detection <- function(vec, min_snr, level, min_scale){
   cwt2d <- cwtft(vec)
   sca <- cwt2d$scales
   cwt2d <- cwt2d$cwt2d
@@ -34,7 +34,7 @@ peak_detection <- function(vec, min_snr, level=0){
   peaks <- peaks+1
   noises <- getNoise(peaks, cwt2d, ridges)
   snr <- (signals+10^-5)/(noises+10^-5)
-  refine <- snr>min_snr & lens>3 & vec[peaks]>level
+  refine <- snr>min_snr & lens>3 & vec[peaks]>level & scales>min_scale
 
   info <- cbind(peaks, scales, snr)
   info <- info[refine,]
@@ -179,7 +179,7 @@ peak.fit <- function(peak,pic,iter){
   return(list(peaks=peak, fitpics=fitpics))
 }
 
-WMPD <- function(pic, min_snr, level, pval, iter){
+WMPD <- function(pic, min_snr, level, pval, iter, min_width){
   library(IRanges)
   library(Matrix)
   library(GA)
@@ -187,7 +187,8 @@ WMPD <- function(pic, min_snr, level, pval, iter){
   vec <- pic[,2]
   rts <- pic[,1]
   mzs <- pic[,3]
-  peaks <- peak_detection(vec, min_snr, level)
+  min_scale <- round(min_width/mean(diff(rts))/4)
+  peaks <- peak_detection(vec, min_snr, level, min_scale)
 
   if (length(peaks$peakIndex) > 1){
     # vec <- WhittakerSmooth(vec, 2)
@@ -263,6 +264,12 @@ runWMPD <- function(){
         numericInput("snr",
                      "Minimum SNR of peaks:",
                      value = 4),
+        numericInput("width",
+                     "Minimum width of peaks:",
+                     value = 5),
+        numericInput("iter",
+                     "Number of iteration of GA:",
+                     value = 100),
         numericInput("threshold",
                      "Threshold of peak height:",
                      value = 0),
@@ -345,7 +352,7 @@ runWMPD <- function(){
 
     Peaks <- eventReactive(input$goButton, {
       withProgress(message = 'Detecting peaks', value = 0.5, {
-        WMPD(pic(), input$snr, input$threshold, input$pval, 200)
+        WMPD(pic(), input$snr, input$threshold, input$pval, input$iter, input$width)
       })
     })
 
