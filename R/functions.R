@@ -210,13 +210,13 @@ WMPD <- function(pic, min_snr, level, pval, iter, min_width){
       t.test(peak.mzs[[s]], peak.mzs[[s+1]])$p.value
     })
 
-    TP <- rep(TRUE, length(peaks$peakIndex))
+    TP <- rep(FALSE, length(peaks$peakIndex))
     for (i in 1:length(pvals)){
-      if (pvals[i] > pval && vec[split.point[i+1]] > min(helf.height[i:(i+1)])){
+      if (pvals[i] < pval || vec[split.point[i+1]] < min(helf.height[i:(i+1)])){
         if (peaks$signals[i] > peaks$signals[i+1]){
-          TP[i+1] <- FALSE
+          TP[i+1] <- TRUE
         } else {
-          TP[i] <- FALSE
+          TP[i] <- TRUE
         }
       }
     }
@@ -431,7 +431,7 @@ LoadData <- function(filename)
   return(list(tic=tic, mzs=Mat$mz,ints=Mat$intensity,scans=scans,times=scanTime))
 }
 
-getPIC <- function(raw, level=0, mztol=0.1, width=5, kmeans=TRUE){
+getPIC <- function(raw, level=0, mztol=0.1, width=5){
   library(Ckmeans.1d.dp)
 
   ind <- order(raw$mzs)
