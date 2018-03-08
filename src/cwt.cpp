@@ -23,7 +23,7 @@ NumericMatrix waveft(NumericVector omega,NumericVector scales) {
 }
 
 // [[Rcpp::export]]
-List cwtft(NumericVector val) {
+List cwtft(NumericVector val, NumericVector scales) {
   double meanSIG = mean(val);
   vec xx = val-meanSIG;
   int n = xx.size();
@@ -43,17 +43,12 @@ List cwtft(NumericVector val) {
 
   double s0 = dt;
   double ds = 0.2;
-  int NbSc = floor(log2(n)/ds);
-
-  vec scales1 = linspace<vec> (0,(NbSc-1),NbSc);
-  scales1 = s0*exp2((scales1)*ds);
-  NumericVector scales = wrap(scales1);
-  scales.push_front(1);
+  int NbSc = scales.size();
 
   NumericMatrix psift = waveft(omega,scales);
 
-  cx_mat MAT(NbSc+1, ff.size());
-  for (int i=0; i<=NbSc; i++) {
+  cx_mat MAT(NbSc, ff.size());
+  for (int i=0; i<NbSc; i++) {
     MAT.row(i) = ff.t();
   }
 
@@ -62,11 +57,8 @@ List cwtft(NumericVector val) {
   cwtcfs = ifft(cwtcfs)/ff.size();
   mat cwtcfs1 = real(cwtcfs.t());
 
-  List output;
-  output["scales"] = scales;
-  output["cwt2d"] = cwtcfs1;
-
-  return output;
+  return List::create(Named("cwt2d") = cwtcfs1,
+                      Named("scales") = scales);
 }
 
 // [[Rcpp::export]]
@@ -117,10 +109,10 @@ List ridgesDetection(NumericMatrix cwt2d, NumericVector val) {
   int n_rows = cwt2d.nrow();
   int n_cols = cwt2d.ncol();
   LogicalMatrix local_max = localMax(cwt2d);
-
+  
   NumericVector cols_small_peaks;
   NumericVector rows_small_peaks;
-
+  
   for (int j=0; j<n_cols; j++){
     for (int i=0; i<5; i++){
       if (local_max(i,j)){
@@ -130,7 +122,7 @@ List ridgesDetection(NumericMatrix cwt2d, NumericVector val) {
       }
     }
   }
-
+  
   List ridges_rows;
   List ridges_cols;
   for (int i=0; i<cols_small_peaks.size(); i++){
@@ -138,15 +130,15 @@ List ridgesDetection(NumericMatrix cwt2d, NumericVector val) {
     NumericVector cols;
     cols.push_back(cols_small_peaks(i));
     rows.push_back(rows_small_peaks(i));
-
+    
     int row_best = rows_small_peaks(i);
     int col_plus = cols_small_peaks(i);
     int col_minus = cols_small_peaks(i);
-
+    
     for (int j=1; j<n_rows; j++){
       int row_plus = row_best + j;
       int row_minus = row_best - j;
-
+      
       if (row_minus>0 && 2<=col_minus && col_minus<=n_cols-2){
         if (local_max(row_minus, col_minus + 1)){col_minus = col_minus + 1;
         }else if(local_max(row_minus, col_minus + 2)){col_minus = col_minus + 2;
@@ -159,7 +151,7 @@ List ridgesDetection(NumericMatrix cwt2d, NumericVector val) {
           cols.push_front(col_minus);
         }
       }
-
+      
       if (row_plus<n_rows && 2<=col_plus && col_plus<=n_cols-2){
         if (local_max(row_plus, col_plus + 1)){col_plus = col_plus + 1;
         }else if(local_max(row_plus, col_plus + 2)){col_plus = col_plus + 2;
@@ -173,16 +165,16 @@ List ridgesDetection(NumericMatrix cwt2d, NumericVector val) {
         }
       }
     }
-
+    
     if (rows.size()>=7){
       ridges_rows.push_back(rows);
       ridges_cols.push_back(cols);
     }
   }
-
+  
   output["ridges_rows"] = ridges_rows;
   output["ridges_cols"] = ridges_cols;
-
+  
   return output;
 }
 
@@ -194,10 +186,10 @@ NumericVector peaksPosition(NumericVector val, List ridges, NumericMatrix cwt2d)
   List ridges_rows_select;
   List ridges_cols_select;
   NumericVector peaks;
-
+  
   int n_cols = cwt2d.ncol();
   int n_rows = cwt2d.nrow();
-
+  
   LogicalMatrix local_minus = localMin(cwt2d);
   LogicalMatrix neg(n_rows,n_cols);
   for (int i=0; i<n_rows; i++){
@@ -207,24 +199,24 @@ NumericVector peaksPosition(NumericVector val, List ridges, NumericMatrix cwt2d)
   }
   neg.column(0) <- true;
   neg.column(neg.ncol()-1) <- true;
-
+  
   for (int i=0; i<ridges_rows.size(); i++){
     rowvec ridge_rows = as<rowvec>(ridges_rows(i));
     rowvec ridge_cols = as<rowvec>(ridges_cols(i));
-
+    
     NumericVector inds;
     for (int j=0; j<ridge_rows.size(); j++){
       if (cwt2d(ridge_rows(j), ridge_cols(j)) > 0){
         inds.push_back(j);
       }
     }
-
+    
     if (inds.size()>0){
       int col = round(mean(ridge_cols.elem(as<uvec>(inds))));
       int row = ridge_rows(abs(ridge_cols-col).index_min());
       int peak = col;
       double top = 0;
-
+      
       for (int j=0; j<n_cols; j++){
         int col_minus = col-j;
         if (col_minus >= 0){
@@ -262,7 +254,7 @@ NumericVector peaksPosition(NumericVector val, List ridges, NumericMatrix cwt2d)
       if (cols_end + 4 > n_cols - 1){
         cols_end = n_cols - 1;
       } else {cols_end = cols_end + 4;}
-
+      
       int peak = 0;
       double top = 0;
       for (int j=cols_start; j<cols_end; j++){
@@ -283,11 +275,11 @@ List getSignal(NumericMatrix cwt2d, List ridges, NumericVector peaks){
   NumericVector ridge_len;
   List ridges_rows = ridges["ridges_rows"];
   List ridges_cols = ridges["ridges_cols"];
-
+  
   for (int ind=0; ind<peaks.size(); ind++){
     NumericVector ridge_rows = ridges_rows(ind);
     NumericVector ridge_cols = ridges_cols(ind);
-
+    
     double signal = 0;
     int best_len;
     for (int i=0; i<ridge_rows.size(); i++){
@@ -301,9 +293,8 @@ List getSignal(NumericMatrix cwt2d, List ridges, NumericVector peaks){
     ridge_len.push_back(best_len);
     signals.push_back(signal);
   }
-
+  
   output["signals"] = signals;
   output["ridge_lens"] = ridge_len;
   return output;
 }
-

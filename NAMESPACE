@@ -1,3 +1,10 @@
-exportPattern("runWMPD", "WMPD")
+exportPattern(
+  'cwtft',
+  'localMax',
+  'localMin',
+  'ridgesDetection',
+  "peaksPosition",
+  'getSignal',
+  'WMPD')
 importFrom(Rcpp, evalCpp)
 useDynLib(WMPD, .registration = TRUE)

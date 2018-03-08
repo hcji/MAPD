@@ -5,7 +5,7 @@
 
 ### Install Depends: 
 
-    install.packages(c("plotly", "Rcpp", "RcppArmadillo", "shiny")
+    install.packages(c("plotly", "Rcpp", "RcppArmadillo", "shiny"))
     source("https://bioconductor.org/biocLite.R")
     biocLite("IRanges")
 
