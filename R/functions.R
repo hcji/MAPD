@@ -41,9 +41,9 @@ peakDetection <- function(vec, scales=1:20, SNR.Th=5, amp.Th=0, ScaleRange=5){
   peaks <- peaks+1
   noises <- getNoise(peaks, cwt2d, ridges)
   snr <- (signals+10^-5)/(noises+10^-5)
-  refine <- snr>SNR.Th & lens>3 & vec[peaks]>amp.Th & scales>ScaleRange
+  refine <- snr>SNR.Th & lens>3 & vec[peaks]>amp.Th & scales[lens]>ScaleRange
 
-  info <- cbind(peaks, scales, snr)
+  info <- cbind(peaks, scales[lens], snr)
   info <- info[refine,]
   info <- unique(info)
   if (length(info)==0){return(NULL)
@@ -56,46 +56,13 @@ peakDetection <- function(vec, scales=1:20, SNR.Th=5, amp.Th=0, ScaleRange=5){
   return(list(peakIndex=peakIndex, peakScale=peakScale, snr=snr, signals=signals))
 }
 
-WhittakerSmooth <- function(y,lambda){
-  M <- length(y)
-  E <- sparseMatrix(i=1:M,j=1:M,x=1)
-  D <- Matrix::diff(E)
-  C <- chol(E+lambda*Matrix::t(D)%*%D)
-  z <- solve(C,solve(t(C),y))
-  return(as.numeric(z))
-}
-
 integration <- function(x,yf){
   n <- length(x)
   integral <- 0.5*sum((x[2:n] - x[1:(n-1)]) * (yf[2:n] + yf[1:(n-1)]))
   return(integral)
 }
 
-plot.resolve <- function(pic, res){
-  library(plotly)
-  rts <- pic[,1]
-  raw.vec <- pic[,2]
-  fit.pics <- do.call(rbind, res$fitpics)
-  sum.vec <- colSums(fit.pics)
-
-  p <- plot_ly(x = rts, y = raw.vec, type = 'scatter', name = 'raw') %>%
-    layout(xaxis = list(title = 'Retention Time (s)'),
-           yaxis = list (title = 'Intensity'))
-
-  for (i in 1:nrow(fit.pics)) {
-    name <- paste('peak ', i)
-    p <- add_trace(p, x = rts, y = fit.pics[i,], line = list(dash = 'dash'), mode='line', name = name)
-  }
-  p <- add_trace(p, x = rts, y = sum.vec, mode='line' , name = 'fitted')
-  fitmodel <- colSums(do.call(rbind, res$fitpics))
-  fiterror <- sqrt(sum((fitmodel-pic[,2])^2))/sum(pic[,2])*100
-  R.square <- sum((mean(pic[,2])-fitmodel)^2)/sum((pic[,2]-mean(pic[,2]))^2)
-  show(p)
-  cat('fiterror: ', fiterror, '%', '\n')
-  cat('R-square: ', R.square, '\n')
-}
-
-peak.fit <- function(peak,pic,iter){
+peakFit <- function(peak,pic,iter){
   # define sub-functions
   Gaussian <- function(x,position,width){
     exp(-((x-position)/(0.6005612*width))^2);
@@ -186,72 +153,72 @@ peak.fit <- function(peak,pic,iter){
   return(list(peaks=peak, fitpics=fitpics))
 }
 
-WMPD <- function(pic, SNR.Th, amp.Th, pval, iter, min_width){
-  library(IRanges)
-  library(Matrix)
-  library(GA)
+isIsolated <- function(index, peaks, int) {
+  vec <- smooth.spline(int)$y
+  loc <- peaks$peakIndex[index]
+  npeaks <- length(peaks$peakIndex)
+  peakHeight <- vec[loc]
+  adjPeak <- {
+    adj <- c(index-1, index+1)
+    adj <- adj[adj>0&adj<=npeaks]
+    peaks$peakIndex[adj]
+  }
+  adjPeakHeight <- vec[adjPeak]
+  if (peakHeight > max(adjPeakHeight)) {
+    return(TRUE)
+  } else {
+    lmin <- sapply(adjPeak, function(adj){
+      min(vec[loc:adj])
+    })
+    if (max(lmin) < 0.5*peakHeight){
+      return(TRUE)
+    } else {
+      return(FALSE)
+    }
+  }
+}
 
-  vec <- pic[,2]
+isSignificant <- function(peaks, int, mzs, pval.Th){
+  vec <- smooth.spline(int)$y
+  helfHeight <- vec[peaks$peakIndex]*0.5
+  splitPoint <- sapply(1:(length(peaks$peakIndex)-1), function(s){
+    peaks$peakIndex[s]+which.min(vec[peaks$peakIndex[s]:peaks$peakIndex[s+1]])
+  })
+  splitPoint <- unique(c(1, splitPoint, length(vec)))
+  peakRanges <- lapply(1:length(peaks$peakIndex),function(s){
+    splitPoint[s]+which(vec[splitPoint[s]:splitPoint[s+1]]>helfHeight[s])-1
+  })
+  peakMzs <- lapply(peakRanges, function(peakRange){
+    mzs[peakRange]
+  })
+  res <- sapply(seq_along(peaks$peakIndex), function(i){
+    adj <- {
+      adj <- c(i-1, i+1)
+      adj <- adj[adj>0&adj<=npeaks]
+    }
+    pvals <- sapply(adj, function(s){
+      t.test(peakMzs[[s]], peakMzs[[i]])$p.value
+    })
+    max(pvals) < pval.Th
+  })
+  
+  return(res)
+}
+
+WMPD <- function(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 5, pval.Th = 0.05, FitIter = 0){
+  int <- pic[,2]
   rts <- pic[,1]
   mzs <- pic[,3]
-  ScaleRange <- round(min_width/mean(diff(rts))/4)
-  peaks <- peak_detection(vec, SNR.Th, amp.Th, ScaleRange)
+  ScaleRange <- round(PeakRange/mean(diff(rts))/4)
+  peaks <- peakDetection(vec, scales=scales, SNR.Th=SNR.Th, amp.Th=amp.Th, ScaleRange=ScaleRange)
 
   if (length(peaks$peakIndex) > 1){
-    # vec <- WhittakerSmooth(vec, 2)
-    helf.height <- vec[peaks$peakIndex]*0.5
-    split.point <- sapply(1:(length(peaks$peakIndex)-1), function(s){
-      peaks$peakIndex[s]+which.min(vec[peaks$peakIndex[s]:peaks$peakIndex[s+1]])
-    })
-    split.point <- unique(c(1, split.point, length(vec)))
-
-    peak.ranges <- lapply(1:length(peaks$peakIndex),function(s){
-      split.point[s]+which(vec[split.point[s]:split.point[s+1]]>helf.height[s])-1
-    })
-
-    peak.mzs <- lapply(peak.ranges, function(peak.range){
-      mzs[peak.range]
-    })
-
-    pvals <- sapply(1:(length(peak.mzs)-1),function(s){
-      t.test(peak.mzs[[s]], peak.mzs[[s+1]])$p.value
-    })
-
-    TP <- rep(FALSE, length(peaks$peakIndex))
-    for (i in 1:length(pvals)){
-      if (pvals[i] < pval || vec[split.point[i+1]] < min(helf.height[i:(i+1)])){
-        if (peaks$signals[i] > peaks$signals[i+1]){
-          TP[i+1] <- TRUE
-        } else {
-          TP[i] <- TRUE
-        }
-      }
-    }
-    peaks$TF <- TP
-
-    new.peaks <- list()
-    new.peaks$peakIndex <- peaks$peakIndex[TP]
-    new.peaks$peakScale <- peaks$peakScale[TP]
-    new.peaks$snr <- peaks$snr[TP]
-    new.peaks$signals <- peaks$signals[TP]
+    rule1 <- sapply(seq_along(peaks$peakIndex), function(i) isIsolated(i, peaks, int))
+    rule2 <- isSignificant(peaks, int, mzs, pval.Th)
+    truePeak <- rule1|rule2
   } else {
-    peaks$TF <- TRUE
-    new.peaks <- peaks
+    truePeak <- TRUE
   }
-
-  res <- peak.fit(new.peaks, pic, iter)
-  positions <- rts[new.peaks$peakIndex]
-  areas <- sapply(res$fitpics, function(fp){
-    integration(rts, fp)
-  })
-
-  heights <- sapply(res$fitpics, function(fp){
-    max(fp)
-  })
-  res$pic <- pic
-  res$peaks <- peaks
-  res$new.peaks$positions <- positions
-  res$new.peaks$areas <- areas
-  res$new.peaks$heights <- heights
+  
   return(res)
 }

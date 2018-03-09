@@ -5,6 +5,10 @@ exportPattern(
   'ridgesDetection',
   "peaksPosition",
   'getSignal',
+  'getNoise',
+  'peakDetection',
+  'isIsolated',
+  'isSignificant',
   'WMPD')
 importFrom(Rcpp, evalCpp)
 useDynLib(WMPD, .registration = TRUE)
