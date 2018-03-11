@@ -36,7 +36,7 @@ peakDetection <- function(vec, scales=1:20, SNR.Th=5, amp.Th=0, ScaleRange=5){
   ridges$ridges_cols <- ridges$ridges_cols[keep]
   
   signals <- getSignal(cwt2d, ridges, peaks)
-  lens <- signals$ridge_lens
+  lens <- signals$ridge_lens + 1
   signals <- signals$signals
   peaks <- peaks+1
   noises <- getNoise(peaks, cwt2d, ridges)
@@ -210,7 +210,7 @@ WMPD <- function(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 5, pval
   rts <- pic[,1]
   mzs <- pic[,3]
   ScaleRange <- round(PeakRange/mean(diff(rts))/4)
-  peaks <- peakDetection(vec, scales=scales, SNR.Th=SNR.Th, amp.Th=amp.Th, ScaleRange=ScaleRange)
+  peaks <- peakDetection(int, scales=scales, SNR.Th=SNR.Th, amp.Th=amp.Th, ScaleRange=ScaleRange)
 
   if (length(peaks$peakIndex) > 1){
     rule1 <- sapply(seq_along(peaks$peakIndex), function(i) isIsolated(i, peaks, int))
