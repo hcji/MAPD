@@ -1,4 +1,4 @@
-Package: WMPD
+Package: MAPD
 Type: Package
 Title: Wavelet-based Peak Detection Assisted by Mass
 Version: 0.1.1

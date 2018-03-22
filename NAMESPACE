@@ -9,6 +9,6 @@ exportPattern(
   'peakDetection',
   'isIsolated',
   'isSignificant',
-  'WMPD')
+  'MAPD')
 importFrom(Rcpp, evalCpp)
-useDynLib(WMPD, .registration = TRUE)
+useDynLib(MAPD, .registration = TRUE)

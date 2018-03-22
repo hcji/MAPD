@@ -205,7 +205,7 @@ isSignificant <- function(peaks, int, mzs, pval.Th){
   return(res)
 }
 
-WMPD <- function(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 5, pval.Th = 0.05, FitIter = 0){
+MAPD <- function(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 5, pval.Th = 0.05, FitIter = 0){
   int <- pic[,2]
   rts <- pic[,1]
   mzs <- pic[,3]

@@ -1,5 +1,5 @@
-# WMPD [![Build Status](https://www.travis-ci.org/hcji/WMPD.svg?branch=master)](https://www.travis-ci.org/hcji/WMPD)
-  Wavelet-based Peak Detection Assisted by Mass
+# MAPD
+  Mass Spectrometry Assisted Peak Detection Algorithm of Pure Ion Chromatograms from LC-MS
   
 ## Installation  
 
@@ -9,13 +9,13 @@
     source("https://bioconductor.org/biocLite.R")
     biocLite("IRanges")
 
-### Install WMPD:  
+### Install MAPD:  
 
     library(devtools);  
-    install_github("hcji/WMPD")
+    install_github("hcji/MAPD")
 		
 ## Usage:
-  A [user guide](https://github.com/hcji/WMPD/blob/master/inst/readme.pdf) is included in the package	
+  A [user guide](https://github.com/hcji/MAPD/blob/master/inst/readme.pdf) is included in the package	
 
 ## Contact
   For any questions, please contact:  ji.hongchao@foxmail.com

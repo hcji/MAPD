@@ -1,14 +1,14 @@
-\name{WMPD}
-\alias{WMPD}
+\name{MAPD}
+\alias{MAPD}
 
 \title{
 Peak detection combining wavelet transform and mass spectrometry
 }
 \description{
-WMPD is a peak detection method, which combines wavelet transform and mass spectrometry information. The main purpose is to identify whether overlapped peaks exist and whether they are true positive. If the overlapped peaks are true peaks, WMPD can also resolve them and calculate their peak heights, widths and areas respectively.
+MAPD is a peak detection method, which combines wavelet transform and mass spectrometry information. The main purpose is to identify whether overlapped peaks exist and whether they are true positive. If the overlapped peaks are true peaks, MAPD can also resolve them and calculate their peak heights, widths and areas respectively.
 }
 \usage{
-WMPD(pic, min_snr, level, pval, iter)
+MAPD(pic, min_snr, level, pval, iter)
 }
 
 \arguments{
@@ -37,6 +37,6 @@ Number of iterations of GA.
 }
 
 \examples{
-pic <- read.csv(system.file('example_pic.csv', package = 'WMPD'))
-peaks <- WMPD(pic, 4, 0, 0.05, 100)
+pic <- read.csv(system.file('example_pic.csv', package = 'MAPD'))
+peaks <- MAPD(pic, 4, 0, 0.05, 100)
 }
