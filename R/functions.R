@@ -18,6 +18,44 @@ getNoise <- function(peaks, cwt2d, ridges){
   return(noises)
 }
 
+localMaximum <- function (x, winSize = 5) {
+  len <- length(x)
+  rNum <- ceiling(len/winSize)
+  
+  ## Transform the vector as a matrix with column length equals winSize
+  ##		and find the maximum position at each row.
+  y <- matrix(c(x, rep(x[len], rNum * winSize - len)), nrow=winSize)
+  y.maxInd <- apply(y, 2, which.max)
+  ## Only keep the maximum value larger than the boundary values
+  selInd <- which(apply(y, 2, function(x) max(x) > x[1] & max(x) > x[winSize]))
+  
+  ## keep the result
+  localMax <- rep(0, len)
+  localMax[(selInd-1) * winSize + y.maxInd[selInd]] <- 1
+  
+  ## Shift the vector with winSize/2 and do the same operation
+  shift <- floor(winSize/2)
+  rNum <- ceiling((len + shift)/winSize)	
+  y <- matrix(c(rep(x[1], shift), x, rep(x[len], rNum * winSize - len - shift)), nrow=winSize)
+  y.maxInd <- apply(y, 2, which.max)
+  ## Only keep the maximum value larger than the boundary values
+  selInd <- which(apply(y, 2, function(x) max(x) > x[1] & max(x) > x[winSize]))
+  localMax[(selInd-1) * winSize + y.maxInd[selInd] - shift] <- 1
+  
+  ## Check whether there is some local maxima have in between distance less than winSize
+  maxInd <- which(localMax > 0)
+  selInd <- which(diff(maxInd) < winSize)
+  if (length(selInd) > 0) {
+    selMaxInd1 <- maxInd[selInd]
+    selMaxInd2 <- maxInd[selInd + 1]
+    temp <- x[selMaxInd1] - x[selMaxInd2]
+    localMax[selMaxInd1[temp <= 0]] <- 0
+    localMax[selMaxInd2[temp > 0]] <- 0
+  }
+  
+  return(localMax)
+}
+
 peakDetection <- function(vec, scales=1:20, SNR.Th=5, amp.Th=0, ScaleRange=5){
   cwt2d <- cwtft(vec, scales=scales)$cwt2d
   ridges <- ridgesDetection(cwt2d, vec)
@@ -294,59 +332,41 @@ peakFit <- function(peak,pic,iter){
   return(list(peaks=peak, fitpics=fitpics))
 }
 
-isIsolated <- function(pic, info) {
+split.intensity <- function(pic, info) {
+  pic[,2] <- smooth.spline(pic[,2])$y
   int <- pic[,2]
   rts <- pic[,1]
-  res <- sapply(1:nrow(info), function(s){
-    wh1 <- which.min(abs(rts - info[s,'left']))
-    h.left <- int[wh1]
-    wh2 <- which.min(abs(rts - info[s,'right']))
-    h.right <- int[wh2]
-    
-    p.left <- p.right <- Inf
-    if (s>1) {
-      p.left <- info[s-1, 'intensity']
-    }
-    if (s<nrow(info)){
-      p.right <- info[s+1, 'intensity']
-    }
-    
-    c.left <- c.right <- FALSE
-    if (h.left < 0.5*p.left){
-      c.left <- TRUE
-    }
-    if (h.right < 0.5*p.right){
-      c.right <- TRUE
-    }
-    
-    c.left|c.right
-  })
-  
+  pks <- info[,'rt']
+  if (length(pks)>1){
+    res <- sapply(1:(length(pks)-1), function(s){
+      wh <- which(rts>pks[s] & rts<pks[s+1])
+      lmin <- wh[which.min(pic[wh, 2])]
+      if (pic[lmin,2] < 0.5*info[s,'intensity'] && pic[lmin,2] < 0.5*info[s+1,'intensity']) {
+        lmin
+      } else {
+        NULL
+      }
+    })
+    res <- unlist(res)
+  } else {
+    res <- NULL
+  }
   return(res)
 }
 
-isSignificant <- function(pic, info, pval.Th){
+split.mz <- function(pic, info){
   rts <- pic[,1]
   mzs <- pic[,3]
-  peakMzs <- lapply(1:nrow(info), function(s){
-    wh <- which(rts >= info[s,'left'] & rts <= info[s,'right'])
-    mzs[wh]
-  })
-  res <- sapply(1:nrow(info), function(i){
-    c.left <- c.right <- TRUE
-    if (i > 1){
-      if (t.test(peakMzs[[i-1]], peakMzs[[i]])$p.value > pval.Th) {
-        c.left <- FALSE
-      }
-    }
-    if (i < nrow(info)){
-      if (t.test(peakMzs[[i+1]], peakMzs[[i]])$p.value > pval.Th){
-        c.right <- FALSE
-      }
-    }
-    
-    c.left | c.right
-  })
+  winSize <- round(min(diff(info[,'rt'])/mean(diff(rts))))
+  CoV <- rollapply(mzs, winSize, function(x) sqrt(var(x))/mean(x))
+  lmax <- which(localMaximum(CoV, winSize)==1)
+  qua <- quantile(CoV, 0.9)
+  lmax <- lmax[CoV[lmax]>qua]
+  if (length(lmax)>0){
+    res <- round(0.5*winSize + lmax)
+  } else {
+    res <- NULL
+  }
   
   return(res)
 }
@@ -361,10 +381,7 @@ getArea <- function(rt, intensity, lb, rb){
   return(Area)
 }
 
-MAPD <- function(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 20, pval.Th = 0.005, FitIter = 0, Smooth = FALSE){
-  if (Smooth) {
-    pic[,2] <- smooth.spline(pic[,2])$y
-  }
+MAPD <- function(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 20, pval.Th = 0.005, FitIter = 0){
   mzs <- pic[,3]
   int <- pic[,2]
   rts <- pic[,1]
@@ -384,11 +401,19 @@ MAPD <- function(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 20, pva
   }
   
   if (!is.na(pval.Th)) {
-    cra1 <- isIsolated(pic, info)
-    cra2 <- isSignificant(pic, info, pval.Th)
-    cra <- cra1 | cra2
+    sp1 <- split.intensity(pic, info)
+    sp2 <- split.mz(pic, info)
+    sp <- sort(c(sp1, sp2))
+    sec <- findInterval(info[,'rt'], sp)
     
-    keep <- as.logical(sapply(1:nrow(cra), function(s) prod(cra[s,])))
+    keep <- sapply(unique(sec), function(s){
+      wh <- which(sec==s)
+      if (length(wh)==1){
+        wh
+      } else {
+        wh[which.max(peaks$signals[wh])]
+      }
+    })
     
     peaks <- lapply(peaks, function(p) p[keep])
     bounds <- getPeakWidth(int, peaks)
