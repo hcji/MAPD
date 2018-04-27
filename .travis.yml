@@ -1,4 +1,0 @@
-language: r
-cache: packages
-bioc_packages: IRanges
-warnings_are_errors: false

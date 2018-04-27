@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // waveft
 NumericMatrix waveft(NumericVector omega, NumericVector scales);
-RcppExport SEXP _WMPD_waveft(SEXP omegaSEXP, SEXP scalesSEXP) {
+RcppExport SEXP _MAPD_waveft(SEXP omegaSEXP, SEXP scalesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -20,7 +20,7 @@ END_RCPP
 }
 // cwtft
 List cwtft(NumericVector val, NumericVector scales);
-RcppExport SEXP _WMPD_cwtft(SEXP valSEXP, SEXP scalesSEXP) {
+RcppExport SEXP _MAPD_cwtft(SEXP valSEXP, SEXP scalesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -32,7 +32,7 @@ END_RCPP
 }
 // localMax
 LogicalMatrix localMax(NumericMatrix cwt2d);
-RcppExport SEXP _WMPD_localMax(SEXP cwt2dSEXP) {
+RcppExport SEXP _MAPD_localMax(SEXP cwt2dSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -43,7 +43,7 @@ END_RCPP
 }
 // localMin
 LogicalMatrix localMin(NumericMatrix cwt2d);
-RcppExport SEXP _WMPD_localMin(SEXP cwt2dSEXP) {
+RcppExport SEXP _MAPD_localMin(SEXP cwt2dSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -54,7 +54,7 @@ END_RCPP
 }
 // ridgesDetection
 List ridgesDetection(NumericMatrix cwt2d, NumericVector val);
-RcppExport SEXP _WMPD_ridgesDetection(SEXP cwt2dSEXP, SEXP valSEXP) {
+RcppExport SEXP _MAPD_ridgesDetection(SEXP cwt2dSEXP, SEXP valSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -66,7 +66,7 @@ END_RCPP
 }
 // peaksPosition
 NumericVector peaksPosition(NumericVector val, List ridges, NumericMatrix cwt2d);
-RcppExport SEXP _WMPD_peaksPosition(SEXP valSEXP, SEXP ridgesSEXP, SEXP cwt2dSEXP) {
+RcppExport SEXP _MAPD_peaksPosition(SEXP valSEXP, SEXP ridgesSEXP, SEXP cwt2dSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -79,7 +79,7 @@ END_RCPP
 }
 // getSignal
 List getSignal(NumericMatrix cwt2d, List ridges, NumericVector peaks);
-RcppExport SEXP _WMPD_getSignal(SEXP cwt2dSEXP, SEXP ridgesSEXP, SEXP peaksSEXP) {
+RcppExport SEXP _MAPD_getSignal(SEXP cwt2dSEXP, SEXP ridgesSEXP, SEXP peaksSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -90,69 +90,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// find_closest
-int find_closest(const int seed, const int scan, const IntegerVector scans, const NumericVector mzs, const IntegerVector clu, const double tol);
-RcppExport SEXP _WMPD_find_closest(SEXP seedSEXP, SEXP scanSEXP, SEXP scansSEXP, SEXP mzsSEXP, SEXP cluSEXP, SEXP tolSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const int >::type seed(seedSEXP);
-    Rcpp::traits::input_parameter< const int >::type scan(scanSEXP);
-    Rcpp::traits::input_parameter< const IntegerVector >::type scans(scansSEXP);
-    Rcpp::traits::input_parameter< const NumericVector >::type mzs(mzsSEXP);
-    Rcpp::traits::input_parameter< const IntegerVector >::type clu(cluSEXP);
-    Rcpp::traits::input_parameter< const double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(find_closest(seed, scan, scans, mzs, clu, tol));
-    return rcpp_result_gen;
-END_RCPP
-}
-// get_trace
-List get_trace(const int seed, const IntegerVector scans, const NumericVector mzs, IntegerVector clu, double tol);
-RcppExport SEXP _WMPD_get_trace(SEXP seedSEXP, SEXP scansSEXP, SEXP mzsSEXP, SEXP cluSEXP, SEXP tolSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const int >::type seed(seedSEXP);
-    Rcpp::traits::input_parameter< const IntegerVector >::type scans(scansSEXP);
-    Rcpp::traits::input_parameter< const NumericVector >::type mzs(mzsSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type clu(cluSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_trace(seed, scans, mzs, clu, tol));
-    return rcpp_result_gen;
-END_RCPP
-}
-// getROI
-IntegerVector getROI(int seed, IntegerVector scans, NumericVector mzs, NumericVector ints, double mztol, int max_width);
-RcppExport SEXP _WMPD_getROI(SEXP seedSEXP, SEXP scansSEXP, SEXP mzsSEXP, SEXP intsSEXP, SEXP mztolSEXP, SEXP max_widthSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type scans(scansSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type mzs(mzsSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type ints(intsSEXP);
-    Rcpp::traits::input_parameter< double >::type mztol(mztolSEXP);
-    Rcpp::traits::input_parameter< int >::type max_width(max_widthSEXP);
-    rcpp_result_gen = Rcpp::wrap(getROI(seed, scans, mzs, ints, mztol, max_width));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_WMPD_waveft", (DL_FUNC) &_WMPD_waveft, 2},
-    {"_WMPD_cwtft", (DL_FUNC) &_WMPD_cwtft, 2},
-    {"_WMPD_localMax", (DL_FUNC) &_WMPD_localMax, 1},
-    {"_WMPD_localMin", (DL_FUNC) &_WMPD_localMin, 1},
-    {"_WMPD_ridgesDetection", (DL_FUNC) &_WMPD_ridgesDetection, 2},
-    {"_WMPD_peaksPosition", (DL_FUNC) &_WMPD_peaksPosition, 3},
-    {"_WMPD_getSignal", (DL_FUNC) &_WMPD_getSignal, 3},
-    {"_WMPD_find_closest", (DL_FUNC) &_WMPD_find_closest, 6},
-    {"_WMPD_get_trace", (DL_FUNC) &_WMPD_get_trace, 5},
-    {"_WMPD_getROI", (DL_FUNC) &_WMPD_getROI, 6},
+    {"_MAPD_waveft", (DL_FUNC) &_MAPD_waveft, 2},
+    {"_MAPD_cwtft", (DL_FUNC) &_MAPD_cwtft, 2},
+    {"_MAPD_localMax", (DL_FUNC) &_MAPD_localMax, 1},
+    {"_MAPD_localMin", (DL_FUNC) &_MAPD_localMin, 1},
+    {"_MAPD_ridgesDetection", (DL_FUNC) &_MAPD_ridgesDetection, 2},
+    {"_MAPD_peaksPosition", (DL_FUNC) &_MAPD_peaksPosition, 3},
+    {"_MAPD_getSignal", (DL_FUNC) &_MAPD_getSignal, 3},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_WMPD(DllInfo *dll) {
+RcppExport void R_init_MAPD(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

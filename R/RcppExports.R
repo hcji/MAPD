@@ -2,42 +2,30 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 waveft <- function(omega, scales) {
-    .Call(`_WMPD_waveft`, omega, scales)
+    .Call(`_MAPD_waveft`, omega, scales)
 }
 
 cwtft <- function(val, scales) {
-    .Call(`_WMPD_cwtft`, val, scales)
+    .Call(`_MAPD_cwtft`, val, scales)
 }
 
 localMax <- function(cwt2d) {
-    .Call(`_WMPD_localMax`, cwt2d)
+    .Call(`_MAPD_localMax`, cwt2d)
 }
 
 localMin <- function(cwt2d) {
-    .Call(`_WMPD_localMin`, cwt2d)
+    .Call(`_MAPD_localMin`, cwt2d)
 }
 
 ridgesDetection <- function(cwt2d, val) {
-    .Call(`_WMPD_ridgesDetection`, cwt2d, val)
+    .Call(`_MAPD_ridgesDetection`, cwt2d, val)
 }
 
 peaksPosition <- function(val, ridges, cwt2d) {
-    .Call(`_WMPD_peaksPosition`, val, ridges, cwt2d)
+    .Call(`_MAPD_peaksPosition`, val, ridges, cwt2d)
 }
 
 getSignal <- function(cwt2d, ridges, peaks) {
-    .Call(`_WMPD_getSignal`, cwt2d, ridges, peaks)
-}
-
-find_closest <- function(seed, scan, scans, mzs, clu, tol) {
-    .Call(`_WMPD_find_closest`, seed, scan, scans, mzs, clu, tol)
-}
-
-get_trace <- function(seed, scans, mzs, clu, tol) {
-    .Call(`_WMPD_get_trace`, seed, scans, mzs, clu, tol)
-}
-
-getROI <- function(seed, scans, mzs, ints, mztol, max_width) {
-    .Call(`_WMPD_getROI`, seed, scans, mzs, ints, mztol, max_width)
+    .Call(`_MAPD_getSignal`, cwt2d, ridges, peaks)
 }
 

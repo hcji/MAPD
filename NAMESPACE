@@ -1,14 +1,4 @@
 exportPattern(
-  'cwtft',
-  'localMax',
-  'localMin',
-  'ridgesDetection',
-  "peaksPosition",
-  'getSignal',
-  'getNoise',
-  'peakDetection',
-  'isIsolated',
-  'isSignificant',
   'MAPD')
 importFrom(Rcpp, evalCpp)
 useDynLib(MAPD, .registration = TRUE)

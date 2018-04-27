@@ -1,7 +1,7 @@
 Package: MAPD
 Type: Package
 Title: Wavelet-based Peak Detection Assisted by Mass
-Version: 0.1.1
+Version: 0.2.0
 Author: Hongchao Ji
 Maintainer: Hongchao Ji <ji.hongchao@foxmail.com>
 Description: WMPD is a peak detection method, which combines wavelet transform and mass spectrometry information. The main purpose is to identify whether overlapped peaks exist and whether they are true positive. If the overlapped peaks are true peaks, WMPD can also resolve them and calculate their peak heights, widths and areas respectively.
