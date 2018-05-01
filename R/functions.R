@@ -358,18 +358,27 @@ split.intensity <- function(pic, info) {
 
 split.mz <- function(pic, info, winSize){
   rts <- pic[,1]
+  int <- pic[,2]
   mzs <- pic[,3]
+  weight <- int/sum(int)
+  
   winSize <- min(winSize, round(nrow(pic)*0.5))
-  CoV <- rollapply(mzs, winSize, function(x) sqrt(var(x))/mean(x))
-  lmax <- which(localMaximum(CoV, winSize)==1)
-  qua <- quantile(CoV, 0.95)
+  # CoV <- rollapply(mzs, winSize, function(x) sqrt(var(x))/mean(x))
+  CoV <- rollapply(seq_along(rts), winSize, function(x) sqrt(var(mzs[x]))/mean(mzs[x])* mean(weight[x]))
+  lmax <- which(localMaximum(CoV, 10)==1)
+  qua <- sapply(lmax, function(l){
+    lb <- max(1, round(l-0.5*winSize))
+    rb <- min(length(CoV), round(l+0.5*winSize))
+    quantile(CoV[lb:rb], 0.95)
+  })
+
   lmax <- lmax[CoV[lmax]>qua]
   if (length(lmax)>0){
     res <- round(0.5*winSize + lmax)
   } else {
     res <- NULL
   }
-  
+  res <- pic[res,1]
   return(res)
 }
 
@@ -383,7 +392,7 @@ getArea <- function(rt, intensity, lb, rb){
   return(Area)
 }
 
-MAPD <- function(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 20, Filter = TRUE, winSize = 50, FitIter = 0){
+MAPD <- function(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 10, Filter = TRUE, winSize = 50, FitIter = 0){
   mzs <- pic[,3]
   int <- pic[,2]
   rts <- pic[,1]
@@ -405,9 +414,12 @@ MAPD <- function(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 20, Fil
   if (Filter) {
     sp1 <- split.intensity(pic, info)
     sp2 <- split.mz(pic, info, winSize)
-    sp <- sort(c(sp1, sp2))
-    sec <- findInterval(info[,'rt'], sp)
-    
+    if (max(length(sp1), length(sp2)) >= 1) {
+      sp <- sort(c(sp1, sp2))
+      sec <- findInterval(info[,'rt'], sp)
+    } else {
+      sec <- rep(1, length(peaks$peakIndex))
+    }
     keep <- sapply(unique(sec), function(s){
       wh <- which(sec==s)
       if (length(wh)==1){
