@@ -3,12 +3,12 @@
 library(KPIC)
 library(MAPD)
 path <- 'E:/project/pymass/python/MM48_MSS.mzML'
-pics <- getPIC(LoadData(path), mztol=0.02, width=1, level=100)
+pics <- getPIC(LoadData(path), mztol=0.02, width=1, level=0.5)
 peaks <- NULL
 for (i in seq_along(pics$pics)) {
   pic <- pics$pics[[i]]
   pic[,1] <- pics$scantime[pic[,1]]
-  this <- MAPD(pic, SNR.Th = 3, amp.Th = 100, PeakRange = 3, Filter = TRUE, winSize = 10)
+  this <- MAPD(pic, SNR.Th = 3, amp.Th = 0.5, PeakRange = 3, Filter = TRUE, winSize = 10)
   peaks <- rbind(peaks, this)
 }
 
