@@ -3,7 +3,7 @@
   
 ## Installation
 	
-	install.packages(c("devtools", "Rcpp", "RcppArmadillo", "Matrix", "GA", "zoo"))
+	install.packages(c("devtools", "Rcpp", "RcppArmadillo", "IRanges", "Matrix", "GA", "zoo"))
 	library(devtools);  
 	install_github("hcji/MAPD")
 	

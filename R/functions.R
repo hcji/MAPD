@@ -241,7 +241,7 @@ getPeakWidth <- function(x, peaks){
   return(do.call(rbind, peakBound))
 }
 
-peakFit <- function(peak,pic,iter){
+peakFit <- function(peak, bounds, pic, iter){
   # define sub-functions
   Gaussian <- function(x,position,width){
     exp(-((x-position)/(0.6005612*width))^2);
@@ -295,13 +295,9 @@ peakFit <- function(peak,pic,iter){
 
   # end of sub-functions
 
-  hh <- 0.5*(pic[c(peak$peakIndex),2])
-  ranges <- whichAsIRanges(pic[,2]>min(hh))
-
   if (length(peak$peakIndex)>0){
-    mids <- round(diff(peak$peakIndex)/2) + peak$peakIndex[1:(length(peak$peakIndex)-1)]
-    starts <- c(min(start(ranges)),mids)
-    ends <- c(mids,max(end(ranges)))
+    starts <- bounds[,1]
+    ends <- bounds[,2]
 
     widths <- (ends-starts)*1.7
     heights <- peak$signals
@@ -309,8 +305,8 @@ peakFit <- function(peak,pic,iter){
 
     lambda <- as.vector(t(cbind(positions,widths)));
 
-    lb <- peakrange(positions,widths,0.05,0.95)$lb
-    ub <- peakrange(positions,widths,0.05,0.95)$ub
+    lb <- peakrange(positions,widths,0.05,0.5)$lb
+    ub <- peakrange(positions,widths,0.05,0.5)$ub
 
     GA <- ga(type = "real-valued", fitness = fitness,
              x = 1:nrow(pic), y = pic[,2], min = c(lb), max = c(ub),
@@ -339,7 +335,7 @@ split.intensity <- function(pic, info) {
   pks <- info[,'rt']
   if (length(pks)>1){
     res <- sapply(1:(length(pks)-1), function(s){
-      wh <- which(rts>pks[s] & rts<pks[s+1])
+      wh <- which(rts>=pks[s] & rts<=pks[s+1])
       loc1 <- which.min(abs(rts-pks[s]))
       loc2 <- which.min(abs(rts-pks[s+1]))
       lmin <- wh[which.min(pic[wh, 2])]
@@ -445,6 +441,7 @@ MAPD <- function(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 10, Fil
     colnames(info) <- c('rt', 'intensity', 'area', 'mz', 'left', 'right')
     return(info)
   } else {
+    bounds <- getPeakWidth(int, peaks)
     pf <- peakFit(peaks, pic, FitIter)
     ind <- pf$peaks$peakIndex
     areas <- sapply(seq_along(ind) , function(s){
