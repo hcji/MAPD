@@ -8,7 +8,7 @@ Peak detection combining wavelet transform and mass spectrometry
 MAPD is a peak detection method, which combines wavelet transform and mass spectrometry information. The main purpose is to identify whether overlapped peaks exist and whether they are true positive. If the overlapped peaks are true peaks, MAPD can also resolve them and calculate their peak heights, widths and areas respectively.
 }
 \usage{
-MAPD(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 5, pval.Th = 0.05, FitIter = 0)
+(pic, scales = 1:20, SNR.Th = 5, amp.Th = 0, PeakRange = 10, Filter = TRUE, winSize = 50, FitIter = 0)
 }
 
 \arguments{
@@ -26,6 +26,9 @@ Minimum intensity of a peak.
 }
   \item{PeakRange}{
 The minimum scale range of the peak.
+}
+  \item{Filter}{
+Whether filter the peak with m/z values.
 }
   \item{pval.Th}{
 P-value of the t-test.

@@ -1,4 +1,6 @@
 exportPattern(
   'MAPD')
 importFrom(Rcpp, evalCpp)
+importFrom("stats", "convolve", "lsfit", "median", "nextn", "quantile", "smooth.spline", "var")
+import('GA', 'Matrix', 'RcppArmadillo', 'zoo')
 useDynLib(MAPD, .registration = TRUE)
