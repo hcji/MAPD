@@ -70,6 +70,7 @@ peakDetection <- function(vec, scales=1:20, SNR.Th=5, amp.Th=0, ScaleRange=5){
     keep <- c(keep, this)
   }
   peaks <- peaks[keep]
+  ridge_lens <- ridge_lens[keep]
   ridges$ridges_rows <- ridges$ridges_rows[keep]
   ridges$ridges_cols <- ridges$ridges_cols[keep]
   
